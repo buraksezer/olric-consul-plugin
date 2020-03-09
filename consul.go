@@ -33,7 +33,7 @@ import (
 type config struct {
 	Provider              string
 	Path                  string
-	Url                   string
+	Address               string
 	Payload               string
 	Token                 string
 	PassingOnly           bool
@@ -134,7 +134,7 @@ func (s *serviceDiscovery) Register() error {
 	if err := s.checkErrors(); err != nil {
 		return err
 	}
-	u, err := url.Parse(s.config.Url)
+	u, err := url.Parse(s.config.Address)
 	if err != nil {
 		return nil
 	}
@@ -160,7 +160,7 @@ func (s *serviceDiscovery) Register() error {
 
 // Deregister removes this node from a service discovery directory.
 func (s *serviceDiscovery) Deregister() error {
-	u, err := url.Parse(s.config.Url)
+	u, err := url.Parse(s.config.Address)
 	if err != nil {
 		return nil
 	}
@@ -178,7 +178,7 @@ func (s *serviceDiscovery) DiscoverPeers() ([]string, error) {
 		return nil, err
 	}
 
-	u, err := url.Parse(s.config.Url)
+	u, err := url.Parse(s.config.Address)
 	if err != nil {
 		return nil, nil
 	}
@@ -231,7 +231,10 @@ func (s *serviceDiscovery) DiscoverPeers() ([]string, error) {
 }
 
 // Close stops underlying goroutines, if there is any. It should be a blocking call.
-func (s *serviceDiscovery) Close() {}
+func (s *serviceDiscovery) Close() error {
+	// Dummy implementation
+	return nil
+}
 
 // ServiceDiscovery defines a service discovery plugin for Olric, backed by Consul.
 var ServiceDiscovery serviceDiscovery
