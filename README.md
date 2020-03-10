@@ -92,6 +92,19 @@ sd["payload"] = `{
 c.ServiceDiscovery = sd
 ```
 
+Or you can load the plugin directly as a library:
+
+```go
+import (
+    olricconsul "github.com/buraksezer/olric-consul-plugin/lib"
+)
+
+//...
+sd := make(map[string]interface{})
+sd["plugin"] = &olricconsul.ConsulDiscovery{}
+//...
+```
+
 ## Contributions
 
 Please don't hesitate to fork the project and send a pull request or just e-mail me to ask questions and share ideas.
