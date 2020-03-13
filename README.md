@@ -1,8 +1,9 @@
 # olric-consul-plugin
 
-Consul integration for service discovery
+This package implements `ServiceDiscovery` interface of Olric and uses Consul at background. With this plugin, you don't need
+to maintain a static list of alive peers in the cluster. 
 
-## Build
+## Install
 
 Get the code:
 
@@ -10,19 +11,20 @@ Get the code:
 go get -u github.com/buraksezer/olric-consul-plugin
 ```
 
+## Usage
+
+### Load as compiled plugin
+
+#### Build
+
 With a properly configured Go environment:
 
 ```
 go build -buildmode=plugin -o consul.so 
 ```
 
-In order to strip debug symbols:
+If you want to strip debug symbols from the produced binary add `-ldflags="-s -w"` to `build` command.
 
-```
-go build -ldflags="-s -w" -buildmode=plugin -o consul.so 
-```
-
-## Configuration
 
 If you prefer to deploy Olric in client-server scenario, add a `serviceDiscovery` block to your `olricd.yaml`. A sample:
 
@@ -92,7 +94,9 @@ sd["payload"] = `{
 c.ServiceDiscovery = sd
 ```
 
-Or you can load the plugin directly as a library:
+### Import directly as a library
+
+You can load the plugin directly as a library:
 
 ```go
 import (
@@ -104,6 +108,23 @@ sd := make(map[string]interface{})
 sd["plugin"] = &olricconsul.ConsulDiscovery{}
 //...
 ```
+
+## Configuration
+
+This plugin has very few configuration parameters: 
+
+| Parameter | Description |
+| --------- | ----------- |
+| provider    | Name of the service discovery daemon. It's Consul. Just informal |
+| path        | Absolute path of the compiled plugin |
+| plugin      | Pointer to imported plugin |  
+| address     | Network address of the service discovery daemon |
+| passingOnly | If you set this `true`, only healthy nodes will be discovered |
+| payload     | Service record for Consul |
+| replaceExistingChecks| Missing healthchecks from the request will be deleted from the agent. Using this parameter allows to idempotently register a service and its checks without having to manually deregister checks.|
+| insecureSkipVerify| Controls whether a client verifies the server's certificate chain and host name. If insecureSkipVerify is true, TLS accepts any certificate presented by the server and any host name in that certificate. |
+
+Please note that you cannot set `plugin` and `path` simultaneously. Olric chooses `path` if you set both of them.  
 
 ## Contributions
 
