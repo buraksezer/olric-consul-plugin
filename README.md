@@ -33,7 +33,7 @@ If you prefer to deploy Olric in client-server scenario, add a `serviceDiscovery
 serviceDiscovery:
   provider: "consul"
   path: "YOUR_PLUGIN_PATH/consul.so"
-  url: "http://127.0.0.1:8500"
+  address: "http://127.0.0.1:8500"
   passingOnly: true
   replaceExistingChecks: false
   insecureSkipVerify: true
