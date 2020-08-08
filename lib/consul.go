@@ -21,10 +21,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 
 	"github.com/Jeffail/gabs/v2"
 	"github.com/mitchellh/mapstructure"
@@ -101,7 +103,8 @@ func (s *ConsulDiscovery) setServiceAndId() error {
 
 	id, ok := payload["ID"]
 	if !ok {
-		return fmt.Errorf("required field not found: ID")
+		s.log.Printf("[WARN] ID is empty. Setting a random ID")
+		id = name.(string) + strconv.Itoa(rand.Intn(10000))
 	}
 	s.service = name.(string)
 	s.id = id.(string)
