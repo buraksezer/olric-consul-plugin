@@ -23,7 +23,7 @@ With a properly configured Go environment:
 go build -buildmode=plugin -o consul.so 
 ```
 
-If you want to strip debug symbols from the produced binary add `-ldflags="-s -w"` to `build` command.
+If you want to strip debug symbols from the produced binary, add `-ldflags="-s -w"` to `build` command.
 
 
 If you prefer to deploy Olric in client-server scenario, add a `serviceDiscovery` block to your `olricd.yaml`. A sample:

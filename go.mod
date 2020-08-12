@@ -4,5 +4,6 @@ go 1.14
 
 require (
 	github.com/Jeffail/gabs/v2 v2.4.0
+	github.com/hashicorp/go-sockaddr v1.0.2
 	github.com/mitchellh/mapstructure v1.1.2
 )
