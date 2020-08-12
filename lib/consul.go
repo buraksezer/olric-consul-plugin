@@ -18,10 +18,10 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -29,8 +29,11 @@ import (
 	"strconv"
 
 	"github.com/Jeffail/gabs/v2"
+	"github.com/hashicorp/go-sockaddr"
 	"github.com/mitchellh/mapstructure"
 )
+
+var errRequiredField = errors.New("required field not found")
 
 type Config struct {
 	Provider              string
@@ -49,6 +52,23 @@ type ConsulDiscovery struct {
 	id      string
 	log     *log.Logger
 	client  *http.Client
+}
+
+func getPrivateIP() (string, error) {
+	// if we're not bound to a specific IP, let's use a suitable private IP address.
+	ipStr, err := sockaddr.GetPrivateIP()
+	if err != nil {
+		return "", fmt.Errorf("failed to get interface addresses: %w", err)
+	}
+	if ipStr == "" {
+		return "", fmt.Errorf("no private IP address found, and explicit IP not provided")
+	}
+
+	parsed := net.ParseIP(ipStr)
+	if parsed == nil {
+		return "", fmt.Errorf("failed to parse private IP address: %q", ipStr)
+	}
+	return parsed.String(), nil
 }
 
 func (s *ConsulDiscovery) checkErrors() error {
@@ -90,24 +110,54 @@ func (s *ConsulDiscovery) Initialize() error {
 	return nil
 }
 
-func (s *ConsulDiscovery) setServiceAndId() error {
+func (s *ConsulDiscovery) processPayload() error {
 	payload := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(s.Config.Payload), &payload); err != nil {
 		return err
 	}
 	name, ok := payload["Name"]
 	if !ok {
-		return fmt.Errorf("required field not found: Name")
+		return fmt.Errorf("%w: Name", errRequiredField)
 	}
 	s.service = name.(string)
 
-	id, ok := payload["ID"]
+	port, ok := payload["Port"]
 	if !ok {
-		s.log.Printf("[WARN] ID is empty. Setting a random ID")
-		id = name.(string) + strconv.Itoa(rand.Intn(10000))
+		return fmt.Errorf("%w: Port", errRequiredField)
 	}
-	s.service = name.(string)
-	s.id = id.(string)
+
+	_, ok = payload["Address"]
+	if !ok {
+		privateIP, err := getPrivateIP()
+		if err != nil {
+			return err
+		}
+		payload["Address"] = privateIP
+	}
+
+	_, ok = payload["ID"]
+	if !ok {
+		payload["ID"] = payload["Address"]
+	}
+	s.id = payload["ID"].(string)
+
+	_, ok = payload["Check"]
+	if !ok {
+		return fmt.Errorf("%w: Check", errRequiredField)
+	}
+	check := payload["Check"].(map[string]interface{})
+	_, ok = check["TCP"]
+	if !ok {
+		addr := payload["Address"].(string)
+		check["TCP"] = net.JoinHostPort(addr, strconv.Itoa(int(port.(float64))))
+		check["Name"] = fmt.Sprintf("Check Olric node on %v", check["TCP"])
+	}
+
+	tmp, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	s.Config.Payload = string(tmp)
 	return nil
 }
 
@@ -148,7 +198,7 @@ func (s *ConsulDiscovery) Register() error {
 		u.RawQuery = q.Encode()
 	}
 
-	if err := s.setServiceAndId(); err != nil {
+	if err := s.processPayload(); err != nil {
 		return err
 	}
 
