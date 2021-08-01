@@ -1,4 +1,4 @@
-// Copyright 2020 Burak Sezer
+// Copyright 2020-2021 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ func getPrivateIP() (string, error) {
 
 func (s *ConsulDiscovery) checkErrors() error {
 	if s.Config == nil {
-		return fmt.Errorf("Config cannot be nil")
+		return fmt.Errorf("config cannot be nil")
 	}
 	if s.log == nil {
 		return fmt.Errorf("logger cannot be nil")
